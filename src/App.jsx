@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import ImageUploader from './ImageUploader'; // Assuming it's in the same directory
-import SurfaceViewer from './SurfaceViewer'; // Assuming it's in the same directory
-import './App.css'; // Import basic CSS
+import ImageUploader from './ImageUploader';
+import SurfaceViewer from './SurfaceViewer';
+import './App.css';
 
 // Defaults
 const DEFAULT_DISPLACEMENT_SCALE = 15;
-const DEFAULT_FRAME_THICKNESS_ABS = 1.0; // Default frame thickness: 1 world unit
-const DEFAULT_FRAME_COLOR = '#ffffff'; // Default frame color: white
+const DEFAULT_FRAME_THICKNESS_ABS = 1.0;
+const DEFAULT_FRAME_COLOR = '#ffffff';
 
 function App() {
   // State for image URLs
@@ -15,6 +15,9 @@ function App() {
 
   // State for displacement intensity
   const [displacementScale, setDisplacementScale] = useState(DEFAULT_DISPLACEMENT_SCALE);
+
+  // State for depth inversion (near/far treatment)
+  const [invertDepth, setInvertDepth] = useState(false);
 
   // State for Frame
   const [addFrame, setAddFrame] = useState(false);
@@ -49,16 +52,16 @@ function App() {
   const handleTextureChange = useCallback((url) => updateUrl(setTextureUrl, url), []);
   const handleDepthMapChange = useCallback((url) => updateUrl(setDepthMapUrl, url), []);
   const handleScaleChange = (event) => setDisplacementScale(parseFloat(event.target.value));
-  const handleAddFrameChange = (event) => setAddFrame(event.target.checked);
   const handleFrameThicknessAbsChange = (event) => setFrameThicknessAbs(parseFloat(event.target.value));
   const handleFrameColorChange = (event) => setFrameColor(event.target.value);
 
   const handleReset = useCallback(() => {
-     if (textureUrl && textureUrl.startsWith('blob:')) setUrlsToRevoke(prev => [...prev, textureUrl]);
-     if (depthMapUrl && depthMapUrl.startsWith('blob:')) setUrlsToRevoke(prev => [...prev, depthMapUrl]);
+    if (textureUrl && textureUrl.startsWith('blob:')) setUrlsToRevoke(prev => [...prev, textureUrl]);
+    if (depthMapUrl && depthMapUrl.startsWith('blob:')) setUrlsToRevoke(prev => [...prev, depthMapUrl]);
     setTextureUrl(null);
     setDepthMapUrl(null);
     setDisplacementScale(DEFAULT_DISPLACEMENT_SCALE);
+    setInvertDepth(false);
     setAddFrame(false);
     setFrameThicknessAbs(DEFAULT_FRAME_THICKNESS_ABS);
     setFrameColor(DEFAULT_FRAME_COLOR);
@@ -70,42 +73,43 @@ function App() {
       console.log("App: Triggering GLTF Export...");
       setExportTrigger(c => c + 1);
     } else {
-        console.warn("App: Cannot export, missing texture or depth map.");
+      console.warn("App: Cannot export, missing texture or depth map.");
     }
   };
-
 
   return (
     <div className="app-container">
       {/* Left Panel: Controls */}
       <div className="control-panel">
-        <h1 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          3D Displacement Map Viewer
-        </h1>
-
-        {/* --- NEW: Instructions Section --- */}
-        <div className="mb-6 p-3 bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-600 rounded-lg text-sm text-blue-800 dark:text-blue-300">
-            <h2 className="font-semibold mb-1">Generate Depth Maps:</h2>
-            <p>
-                You can generate 8-bit grayscale depth maps from your images using AI tools like Depth Anything V2.
-            </p>
-            <p className="mt-1">
-                Visit the Hugging Face Space:
-                <a
-                    href="https://huggingface.co/spaces/depth-anything/Depth-Anything-V2"
-                    target="_blank" // Open in new tab
-                    rel="noopener noreferrer" // Security best practice
-                    className="ml-1 font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                    Depth Anything V2
-                </a>
-            </p>
-             <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                (Ensure you download the 8-bit grayscale version for use here).
-            </p>
+        {/* Header */}
+        <div className="panel-header">
+          <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h1>3D Displacement Viewer</h1>
         </div>
-        {/* --- End Instructions Section --- */}
 
+        {/* Generate Depth Maps tip */}
+        <div className="info-box">
+          <div className="info-box-title">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            Generate Depth Maps with AI
+          </div>
+          <p>
+            Use{' '}
+            <a
+              href="https://huggingface.co/spaces/depth-anything/Depth-Anything-V2"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="info-link"
+            >
+              Depth Anything V2
+            </a>{' '}
+            to create 8-bit grayscale depth maps from your photos.
+          </p>
+        </div>
 
         {/* Image Upload Component */}
         <ImageUploader
@@ -115,64 +119,127 @@ function App() {
         />
 
         {/* Settings Section */}
-        <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow space-y-4">
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 border-b border-gray-300 dark:border-gray-600 pb-2">
-                Settings
-            </h2>
-            {/* ... (Displacement Scale Slider) ... */}
-             <div>
-                <label htmlFor="displacementScale" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Displacement Scale: {displacementScale.toFixed(1)}
-                </label>
-                <input id="displacementScale" type="range" min="0" max="100" step="0.5" value={displacementScale} onChange={handleScaleChange} className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-blue-400" disabled={!depthMapUrl} />
+        <div className="settings-card">
+          <h2 className="settings-title">Settings</h2>
+
+          {/* Displacement Scale */}
+          <div className="setting-row">
+            <div className="setting-label-row">
+              <label htmlFor="displacementScale" className="setting-label">Displacement Scale</label>
+              <span className="setting-value">{displacementScale.toFixed(1)}</span>
+            </div>
+            <input
+              id="displacementScale"
+              type="range" min="0" max="100" step="0.5"
+              value={displacementScale}
+              onChange={handleScaleChange}
+              className="range-input"
+              disabled={!depthMapUrl}
+            />
+          </div>
+
+          {/* Invert Depth (near/far toggle) */}
+          <div className="setting-row">
+            <div className="toggle-row">
+              <div>
+                <span className="setting-label">Invert Depth</span>
+                <p className="setting-hint">
+                  {invertDepth ? 'Black = near (extrudes toward viewer)' : 'White = near (extrudes toward viewer)'}
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={invertDepth}
+                onClick={() => setInvertDepth(v => !v)}
+                disabled={!depthMapUrl}
+                className={`toggle-switch ${invertDepth ? 'toggle-on' : 'toggle-off'}`}
+              >
+                <span className={`toggle-thumb ${invertDepth ? 'toggle-thumb-on' : 'toggle-thumb-off'}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Frame Options */}
+          <fieldset className="fieldset-group">
+            <legend className="fieldset-legend">Frame Options</legend>
+
+            <div className="toggle-row">
+              <label htmlFor="addFrame" className="setting-label">Add Outer Frame</label>
+              <button
+                id="addFrame"
+                role="switch"
+                aria-checked={addFrame}
+                onClick={() => setAddFrame(v => !v)}
+                disabled={!depthMapUrl || !textureUrl}
+                className={`toggle-switch ${addFrame ? 'toggle-on' : 'toggle-off'}`}
+              >
+                <span className={`toggle-thumb ${addFrame ? 'toggle-thumb-on' : 'toggle-thumb-off'}`} />
+              </button>
             </div>
 
-            {/* Frame Controls Group */}
-            <fieldset className="border border-gray-300 dark:border-gray-600 rounded-md p-3 space-y-3">
-                 <legend className="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Frame Options</legend>
-                 {/* ... (Frame Checkbox) ... */}
-                 <div className="flex items-center">
-                    <input id="addFrame" type="checkbox" checked={addFrame} onChange={handleAddFrameChange} className="h-4 w-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700" disabled={!depthMapUrl || !textureUrl} />
-                    <label htmlFor="addFrame" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"> Add Outer Frame </label>
+            {addFrame && (
+              <div className="setting-row">
+                <div className="setting-label-row">
+                  <label htmlFor="frameThicknessAbs" className="setting-label">Frame Width</label>
+                  <span className="setting-value">{frameThicknessAbs.toFixed(1)} u</span>
                 </div>
-                 {/* ... (Frame Thickness Slider) ... */}
-                 {addFrame && ( <div> <label htmlFor="frameThicknessAbs" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"> Frame Width (World Units): {frameThicknessAbs.toFixed(1)} </label> <input id="frameThicknessAbs" type="range" min="0.1" max="5" step="0.1" value={frameThicknessAbs} onChange={handleFrameThicknessAbsChange} className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-blue-400" disabled={!depthMapUrl || !textureUrl} /> </div> )}
-                 {/* ... (Frame Color Picker) ... */}
-                 {addFrame && ( <div> <label htmlFor="frameColor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"> Frame Color: </label> <input id="frameColor" type="color" value={frameColor} onChange={handleFrameColorChange} className="w-full h-8 p-0 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer" disabled={!depthMapUrl || !textureUrl} /> </div> )}
-            </fieldset>
+                <input
+                  id="frameThicknessAbs"
+                  type="range" min="0.1" max="5" step="0.1"
+                  value={frameThicknessAbs}
+                  onChange={handleFrameThicknessAbsChange}
+                  className="range-input"
+                  disabled={!depthMapUrl || !textureUrl}
+                />
+              </div>
+            )}
+
+            {addFrame && (
+              <div className="setting-row">
+                <label htmlFor="frameColor" className="setting-label">Frame Color</label>
+                <input
+                  id="frameColor"
+                  type="color"
+                  value={frameColor}
+                  onChange={handleFrameColorChange}
+                  className="color-input"
+                  disabled={!depthMapUrl || !textureUrl}
+                />
+              </div>
+            )}
+          </fieldset>
         </div>
 
-         {/* Export Button */}
-         <div className="mt-6">
-            <button
-                onClick={handleExport}
-                disabled={!textureUrl || !depthMapUrl}
-                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                Export as GLB Model
-            </button>
-             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
-                Exports the current mesh with texture as a .glb file.
-            </p>
-         </div>
+        {/* Export Button */}
+        <div className="mt-5">
+          <button
+            onClick={handleExport}
+            disabled={!textureUrl || !depthMapUrl}
+            className="export-btn"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            Export as GLB Model
+          </button>
+          <p className="export-hint">Downloads the displaced mesh with texture as a .glb file.</p>
+        </div>
 
-
-         {/* How to Use Instructions Box */}
-         <div className="mt-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 shadow">
-             <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-1">How to Use This Tool:</h3>
-            <ol className="list-decimal list-inside space-y-1">
-                <li>Upload a color texture image.</li>
-                <li>Upload an 8-bit grayscale depth map (white=high, black=low).</li>
-                <li>Adjust the 'Displacement Scale' slider.</li>
-                <li>Optionally, add an outer frame, adjust its width and color.</li>
-                <li>Click the 'Export as GLB Model' button to download.</li>
-                <li>Click & drag in the right panel to rotate.</li>
-                <li>Scroll or pinch to zoom.</li>
-                 <li>Right-click & drag (or two-finger drag) to pan.</li>
-            </ol>
-             <p className="mt-3 text-red-600 dark:text-red-400 font-medium">
-                Note: 16-bit depth maps require pre-conversion to 8-bit grayscale for browser use.
-             </p>
+        {/* How to Use */}
+        <div className="how-to-card">
+          <h3 className="how-to-title">How to Use</h3>
+          <ol className="how-to-list">
+            <li>Upload a color texture image.</li>
+            <li>Upload an 8-bit grayscale depth map.</li>
+            <li>Adjust the Displacement Scale slider.</li>
+            <li>Toggle Invert Depth to switch near/far treatment.</li>
+            <li>Optionally add an outer frame.</li>
+            <li>Click Export to download the .glb file.</li>
+            <li>Drag to rotate · Scroll to zoom · Right-drag to pan.</li>
+          </ol>
+          <p className="how-to-note">
+            ⚠ 16-bit depth maps must be converted to 8-bit grayscale before use.
+          </p>
         </div>
       </div>
 
@@ -182,6 +249,7 @@ function App() {
           textureUrl={textureUrl}
           depthMapUrl={depthMapUrl}
           displacementScale={displacementScale}
+          invertDepth={invertDepth}
           addFrame={addFrame}
           frameThicknessAbs={frameThicknessAbs}
           frameColor={frameColor}
