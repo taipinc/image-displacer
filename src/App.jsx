@@ -16,8 +16,8 @@ function App() {
   // State for displacement intensity
   const [displacementScale, setDisplacementScale] = useState(DEFAULT_DISPLACEMENT_SCALE);
 
-  // State for depth inversion (near/far treatment)
-  const [invertDepth, setInvertDepth] = useState(false);
+  // State for depth inversion (near/far treatment) — default true so dark areas extrude toward viewer
+  const [invertDepth, setInvertDepth] = useState(true);
 
   // State for Frame
   const [addFrame, setAddFrame] = useState(false);
@@ -61,7 +61,7 @@ function App() {
     setTextureUrl(null);
     setDepthMapUrl(null);
     setDisplacementScale(DEFAULT_DISPLACEMENT_SCALE);
-    setInvertDepth(false);
+    setInvertDepth(true);
     setAddFrame(false);
     setFrameThicknessAbs(DEFAULT_FRAME_THICKNESS_ABS);
     setFrameColor(DEFAULT_FRAME_COLOR);
