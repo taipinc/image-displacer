@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useMemo, useState, Suspense } from 'react';
-import { Canvas, useLoader } from '@react-three/fiber';
+import React, { useRef, useEffect, useState, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 // --- Import GLTFExporter ---
@@ -51,6 +51,7 @@ function DisplacedMesh({
     textureUrl,
     depthMapUrl,
     displacementScale,
+    invertDepth,
     addFrame,
     frameThicknessAbs,
     frameColor,
@@ -168,7 +169,8 @@ function DisplacedMesh({
            const pixelX = Math.floor(uClamped * (depthW - 1)); const pixelY = Math.floor(vClamped * (depthH - 1));
            const pixelIndex = (pixelY * depthW + pixelX) * 4;
            const depthValue = imageData.data[pixelIndex]; const normalizedDepth = depthValue / 255.0;
-           zOffset = (normalizedDepth - 1.0) * displacementScale;
+           const effectiveDepth = invertDepth ? (1.0 - normalizedDepth) : normalizedDepth;
+           zOffset = effectiveDepth * displacementScale;
            if (loggedCount < LOG_LIMIT && i % Math.floor(positionAttribute.count / LOG_LIMIT || 1) === 0) { console.log(`Vertex ${i}: Pos=(${x.toFixed(2)}, ${y.toFixed(2)}), InImage=${isInsideImage}, UV=(${u.toFixed(3)}, ${v.toFixed(3)}), DepthValue=${depthValue}, Z-Offset=${zOffset.toFixed(3)}`); loggedCount++; }
        }
        positionAttribute.setZ(i, zOffset);
@@ -176,7 +178,7 @@ function DisplacedMesh({
      console.timeEnd("Displacement Calculation");
      positionAttribute.needsUpdate = true; geom.computeVertexNormals();
      console.log("Displacement applied (using state geometry).");
-  }, [geometry, depthInfo, textureInfo, processedColorMap, displacementScale, isLoadingDepth, depthError, addFrame, frameThicknessAbs, isLoadingTexture, textureError]);
+  }, [geometry, depthInfo, textureInfo, processedColorMap, displacementScale, invertDepth, isLoadingDepth, depthError, addFrame, frameThicknessAbs, isLoadingTexture, textureError]);
 
 
   // --- Effect for GLTF Export ---
@@ -320,7 +322,6 @@ function DisplacedMesh({
     <mesh
       ref={meshRef}
       geometry={geometry}
-      rotation={[-Math.PI / 2, 0, 0]}
       receiveShadow
       name="DisplacedSurfaceMesh"
     >
@@ -346,6 +347,7 @@ function SurfaceViewer({
     textureUrl,
     depthMapUrl,
     displacementScale,
+    invertDepth,
     addFrame,
     frameThicknessAbs,
     frameColor,
@@ -358,7 +360,7 @@ function SurfaceViewer({
     <div className="w-full h-full bg-gray-200 dark:bg-gray-700 relative">
       <Canvas
         gl={{ preserveDrawingBuffer: true }} // IMPORTANT
-        camera={{ position: [0, IMAGE_PLANE_SIZE * 0.8, IMAGE_PLANE_SIZE * 1.1], fov: 50 }}
+        camera={{ position: [0, IMAGE_PLANE_SIZE * 0.15, IMAGE_PLANE_SIZE * 1.8], fov: 50 }}
         className="w-full h-full"
       >
         <ambientLight intensity={1.0} />
@@ -372,6 +374,7 @@ function SurfaceViewer({
               textureUrl={textureUrl}
               depthMapUrl={depthMapUrl}
               displacementScale={displacementScale}
+              invertDepth={invertDepth}
               addFrame={addFrame}
               frameThicknessAbs={frameThicknessAbs}
               frameColor={frameColor}
@@ -382,7 +385,7 @@ function SurfaceViewer({
           )}
         </Suspense>
 
-        <gridHelper args={[gridWidth, 20, '#888', '#aaa']} rotation={[0, 0, 0]} position={[0,-0.1,0]}/>
+        <gridHelper args={[gridWidth, 20, '#888', '#aaa']} position={[0, -IMAGE_PLANE_SIZE * 0.5, 0]}/>
       </Canvas>
     </div>
   );

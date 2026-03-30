@@ -1,109 +1,517 @@
-/* Ensure Tailwind base/components/utilities are imported if using Tailwind */
-/* @tailwind base; */
-/* @tailwind components; */
-/* @tailwind utilities; */
 @import "tailwindcss";
 
-
+/* ── Reset & base ─────────────────────────────────────────────── */
 body {
   margin: 0;
-  font-family: sans-serif;
-  /* Prevent pull-to-refresh on mobile */
+  font-family: 'Public Sans', system-ui, sans-serif;
   overscroll-behavior: none;
-  background-color: #e5e7eb; /* Light gray background */
+  background-color: #f5f5f5;
+  color: #111;
 }
 
-/* Dark mode preference */
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #1f2937; /* Dark gray background */
+    background-color: #111;
+    color: #f5f5f5;
   }
 }
 
-
+/* ── Layout ───────────────────────────────────────────────────── */
 .app-container {
   display: flex;
-  flex-direction: column; /* Stack panels vertically on small screens */
-  height: 100vh; /* Full viewport height */
-  width: 100vw; /* Full viewport width */
-  overflow: hidden; /* Prevent scrolling on the body */
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 .control-panel {
-  padding: 1rem; /* 16px */
-  overflow-y: auto; /* Allow scrolling if content overflows */
-  background-color: #ffffff; /* White background */
-  color: #1f2937; /* Dark text */
-  /* Take full width on small screens */
+  padding: 1.25rem;
+  overflow-y: auto;
+  background-color: #fff;
   width: 100%;
-  /* Fixed height or max-height might be needed on small screens */
-  max-height: 50vh; /* Example: Limit height on small screens */
+  max-height: 50vh;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .viewer-panel {
-  flex-grow: 1; /* Take remaining space */
-  min-height: 0; /* Important for flex-grow in flex column */
-  position: relative; /* For potential absolute positioning inside */
+  flex-grow: 1;
+  min-height: 0;
+  position: relative;
 }
 
-/* Apply side-by-side layout on medium screens and up */
-@media (min-width: 768px) { /* md breakpoint (Tailwind default) */
-  .app-container {
-    flex-direction: row; /* Side-by-side layout */
-  }
+@media (min-width: 768px) {
+  .app-container { flex-direction: row; }
 
   .control-panel {
-    width: 350px; /* Fixed width for control panel */
-    flex-shrink: 0; /* Prevent panel from shrinking */
-    max-height: 100vh; /* Allow full height */
-    border-right: 1px solid #d1d5db; /* Separator line */
-  }
-
-  .viewer-panel {
-    /* Height is determined by flex container */
+    width: 340px;
+    flex-shrink: 0;
+    max-height: 100vh;
+    border-bottom: none;
+    border-right: 1px solid #e0e0e0;
   }
 }
 
-
-/* Dark mode styles for panels */
 @media (prefers-color-scheme: dark) {
   .control-panel {
-    background-color: #374151; /* Darker gray */
-    color: #f3f4f6; /* Light text */
-    border-right-color: #4b5563; /* Darker separator */
+    background-color: #1a1a1a;
+    border-color: #2e2e2e;
   }
-   .viewer-panel {
-     /* Background is set on the SurfaceViewer component itself */
-   }
 }
 
-/* Basic heading style (if not using Tailwind) */
-h1 {
-  font-size: 1.5rem; /* 24px */
-  font-weight: 600;
+/* ── Panel header ─────────────────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
-/* Basic label style (if not using Tailwind) */
-label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.875rem; /* 14px */
-  font-weight: 500;
+.panel-header h1 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
 }
 
-/* Basic input style (if not using Tailwind) */
-input[type="file"], input[type="range"] {
-   width: 100%;
-   margin-bottom: 0.5rem;
+.header-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #2563eb;
+  flex-shrink: 0;
 }
 
-/* Basic button style (if not using Tailwind) */
-button {
-  padding: 0.5rem 1rem;
+@media (prefers-color-scheme: dark) {
+  .panel-header h1 { color: #f5f5f5; }
+  .header-icon { color: #2563eb; }
+}
+
+/* ── Info box ─────────────────────────────────────────────────── */
+.info-box {
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.info-box-title {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.info-box-title svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+
+.info-link {
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.info-link:hover { color: #1d4ed8; }
+
+@media (prefers-color-scheme: dark) {
+  .info-box {
+    background: #1e2d3d;
+    border-color: #1e40af;
+    color: #93c5fd;
+  }
+  .info-link { color: #60a5fa; }
+  .info-link:hover { color: #93c5fd; }
+}
+
+/* ── Settings card ────────────────────────────────────────────── */
+.settings-card {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+}
+
+.settings-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #888;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-card {
+    background: #1a1a1a;
+    border-color: #2e2e2e;
+  }
+  .settings-title {
+    color: #666;
+    border-bottom-color: #2e2e2e;
+  }
+}
+
+/* ── Setting rows ─────────────────────────────────────────────── */
+.setting-row {
+  margin-bottom: 0.85rem;
+}
+
+.setting-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.setting-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.setting-hint {
+  font-size: 0.7rem;
+  color: #888;
+  margin: 0.1rem 0 0;
+}
+
+.setting-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .setting-label { color: #ddd; }
+  .setting-value { color: #60a5fa; }
+}
+
+/* ── Toggle switch ────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
   border: none;
-  border-radius: 0.375rem; /* 6px */
   cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s;
+  padding: 0;
+}
+
+.toggle-switch:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.toggle-on  { background-color: #2563eb; }
+.toggle-off { background-color: #ccc; }
+
+@media (prefers-color-scheme: dark) {
+  .toggle-off { background-color: #444; }
+}
+
+.toggle-thumb {
+  display: block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 9999px;
+  background: white;
+  transition: transform 0.15s;
+}
+
+.toggle-thumb-on  { transform: translateX(1.15rem); }
+.toggle-thumb-off { transform: translateX(0.18rem); }
+
+/* ── Range input ──────────────────────────────────────────────── */
+.range-input {
+  width: 100%;
+  height: 0.25rem;
+  appearance: none;
+  border-radius: 9999px;
+  background: #ddd;
+  cursor: pointer;
+  accent-color: #2563eb;
+  margin: 0;
+}
+
+.range-input:disabled { opacity: 0.35; cursor: not-allowed; }
+
+@media (prefers-color-scheme: dark) {
+  .range-input { background: #333; }
+}
+
+/* ── Fieldset ─────────────────────────────────────────────────── */
+.fieldset-group {
+  border: 1px solid #e0e0e0;
+  border-radius: 0.4rem;
+  padding: 0.65rem 0.75rem;
+  margin: 0;
+}
+
+.fieldset-legend {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #888;
+  padding: 0 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .fieldset-group { border-color: #2e2e2e; }
+  .fieldset-legend { color: #666; }
+}
+
+/* ── Color input ──────────────────────────────────────────────── */
+.color-input {
+  width: 100%;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  background: none;
+}
+
+.color-input:disabled { opacity: 0.35; cursor: not-allowed; }
+
+@media (prefers-color-scheme: dark) {
+  .color-input { border-color: #2e2e2e; }
+}
+
+/* ── Export button ────────────────────────────────────────────── */
+.export-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.export-btn svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.export-btn:hover:not(:disabled) { background: #1d4ed8; }
+
+.export-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.export-hint {
+  font-size: 0.68rem;
+  color: #888;
+  text-align: center;
+  margin-top: 0.35rem;
+}
+
+/* ── How-to card ──────────────────────────────────────────────── */
+.how-to-card {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 0.72rem;
+  color: #666;
+}
+
+.how-to-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #444;
+  margin: 0 0 0.4rem;
+}
+
+.how-to-list {
+  padding-left: 1rem;
+  margin: 0 0 0.4rem;
+  line-height: 1.7;
+}
+
+.how-to-note {
+  color: #d32f2f;
   font-weight: 500;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .how-to-card {
+    background: #1a1a1a;
+    border-color: #2e2e2e;
+    color: #888;
+  }
+  .how-to-title { color: #bbb; }
+  .how-to-note { color: #f87171; }
+}
+
+/* ── Upload card (ImageUploader) ──────────────────────────────── */
+.upload-card {
+  padding: 0.85rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.upload-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #888;
+  margin: 0 0 0.1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.upload-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.upload-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: #2563eb;
+  color: white;
+  border-radius: 9999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.upload-label-hint {
+  font-weight: 400;
+  color: #888;
+  font-size: 0.7rem;
+}
+
+.file-input {
+  width: 100%;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: #555;
+  border: 1px solid #ddd;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  background: white;
+}
+
+.file-input:hover { border-color: #2563eb; }
+
+.file-input::file-selector-button {
+  margin-right: 0.65rem;
+  padding: 0.35rem 0.65rem;
+  border: none;
+  border-right: 1px solid #ddd;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.file-input::file-selector-button:hover { background: #dbeafe; }
+
+.upload-hint {
+  font-size: 0.67rem;
+  color: #888;
+  margin: 0;
+}
+
+.reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: none;
+  color: #888;
+  border: 1px solid #ddd;
+  border-radius: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.reset-btn svg { width: 0.8rem; height: 0.8rem; }
+.reset-btn:hover { border-color: #aaa; color: #555; }
+
+@media (prefers-color-scheme: dark) {
+  .upload-card {
+    background: #1a1a1a;
+    border-color: #2e2e2e;
+  }
+  .upload-title {
+    color: #666;
+    border-bottom-color: #2e2e2e;
+  }
+  .upload-label { color: #ddd; }
+  .file-input {
+    background: #111;
+    border-color: #333;
+    color: #999;
+  }
+  .file-input:hover { border-color: #2563eb; }
+  .file-input::file-selector-button {
+    background: #1e2d3d;
+    color: #60a5fa;
+    border-right-color: #333;
+  }
+  .file-input::file-selector-button:hover { background: #1e3a5f; }
+  .reset-btn {
+    background: none;
+    border-color: #333;
+    color: #666;
+  }
+  .reset-btn:hover { border-color: #555; color: #aaa; }
 }
 
